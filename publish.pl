@@ -31,7 +31,11 @@ die "pubdir '$pubdir' does not exist" unless -d $pubdir->realpath;
 my $admin_token = $config->{admin_token};
 die "admin token must be set" unless length($admin_token);
 
-my $registry = -f tokens_file ? from_json(tokens_file->slurp_utf8) : +{ };
+my $registry = reload_registry;
+
+sub reload_registry {
+    -f tokens_file ? from_json(tokens_file->slurp_utf8) : +{ };
+}
 
 sub can_admin {
     my $token = shift;
@@ -40,6 +44,7 @@ sub can_admin {
 
 sub exists_page {
     my $key = shift;
+    $registry = reload_registry;
     exists $registry->{$key}
 }
 
