@@ -7,14 +7,31 @@ use Bytes::Random;
 use Mojo::Util qw(b64_encode);
 use Mojo::JSON qw(from_json to_json);
 
-my $config = plugin Config => {file => 'publish.conf'};
+sub xdg {
+    # XXX: Silence experimental warnings from File::XDG
+    BEGIN {
+        local %SIG;
+        $SIG{__WARN__} = sub{ };
+        require File::XDG;
+    }
+    state $xdg = File::XDG->new(name => 'mathconf')
+}
+
+sub config_file {
+    path(xdg->config_home, 'publish.conf')->touchpath
+}
+
+sub tokens_file {
+    path(xdg->config_home, 'tokens.json')
+}
+
+my $config = plugin Config => {file => config_file};
 my $pubdir = path($config->{pubdir});
 die "pubdir '$pubdir' does not exist" unless -d $pubdir->realpath;
 my $admin_token = $config->{admin_token};
 die "admin token must be set" unless length($admin_token);
 
-my $registry_file = path('tokens.json');
-my $registry = -f $registry_file ? from_json($registry_file->slurp_utf8) : +{ };
+my $registry = -f tokens_file ? from_json(tokens_file->slurp_utf8) : +{ };
 
 sub can_admin {
     my $token = shift;
@@ -41,7 +58,7 @@ sub generate_token {
 sub register_page {
     my ($key, $token) = @_;
     $registry->{$key} = $token;
-    $registry_file->spew_utf8(to_json $registry);
+    tokens_file->spew_utf8(to_json $registry);
     1
 }
 
