@@ -88,8 +88,8 @@ post '/register' => sub ($c) {
 
 post '/:page' => sub ($c) {
     my $page = $c->stash('page');
-    if (not $page or not exists_page($page)) {
-        $c->render(text => "This page is not registered.\n", status => 400);
+    if (not exists_page($page)) {
+        $c->render(text => "The page '$page' is not registered.\n", status => 400);
         return;
     }
 
