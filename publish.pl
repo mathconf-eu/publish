@@ -125,4 +125,6 @@ any '/*url' => {url => ''} => sub ($c) {
     $c->render(text => "$meth /$url is not supported.\n", status => 404);
 };
 
+# Allow upload size of 64M. This also needs a setting in nginx.
+app->max_request_size(1024 * 1024 * 64);
 app->start;
